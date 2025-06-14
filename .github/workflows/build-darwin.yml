@@ -1,0 +1,36 @@
+# SPDX-FileCopyrightText: 2024 Christina Sørensen, eza contributors
+# SPDX-License-Identifier: EUPL-1.2
+name: Build Darwin Binary
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build-darwin:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Build release binary
+        run: cargo build --release
+      - name: Upload Darwin binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: eza-darwin-binary
+          path: target/release/eza
+          if-no-files-found: error
+      - name: Upload Darwin binary to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: target/release/eza
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

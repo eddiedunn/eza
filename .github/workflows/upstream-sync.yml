@@ -1,0 +1,31 @@
+# SPDX-FileCopyrightText: 2024 Christina Sørensen, eza contributors
+# SPDX-License-Identifier: EUPL-1.2
+name: Sync tags from upstream
+
+# This workflow will periodically (and on demand) sync tags from eza-community/eza to your fork.
+# To allow pushing tags, create a Personal Access Token (PAT) with repo access and add it as a secret named PAT_PUSH.
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # every hour
+  workflow_dispatch:
+
+jobs:
+  sync-upstream-tags:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout your fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Add upstream remote
+        run: git remote add upstream https://github.com/eza-community/eza.git
+      - name: Fetch upstream tags
+        run: git fetch upstream --tags
+      - name: Push new tags to origin
+        env:
+          GIT_ASKPASS: /dev/null
+          GITHUB_TOKEN: ${{ secrets.PAT_PUSH }}
+        run: |
+          set -e
+          git tag -l | xargs -n 1 -I {} git push https://x-access-token:${{ secrets.PAT_PUSH }}@github.com/${{ github.repository }}.git refs/tags/{}
